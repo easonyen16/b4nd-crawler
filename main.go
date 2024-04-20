@@ -299,3 +299,5 @@ func downloadFile(url, filePath string) {
 		panic(err)
 	}
 }
+
+//v1.1
