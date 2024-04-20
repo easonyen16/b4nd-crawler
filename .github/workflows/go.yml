@@ -19,16 +19,22 @@ jobs:
     - name: Set up Go
       uses: actions/setup-go@v4
       with:
-        go-version: '1.22'  # Make sure this matches the version you need
+        go-version: '1.22'
 
     - name: Build
       env:
         GOOS: ${{ matrix.goos }}
         GOARCH: ${{ matrix.goarch }}
-      run: go build -v -o b4nd-crawler-${{ matrix.goos }}_${{ matrix.goarch }}
+      run: |
+        if [ "${{ matrix.goos }}" = "windows" ]; then
+          EXE_SUFFIX=".exe"
+        else
+          EXE_SUFFIX=""
+        fi
+        go build -v -o b4nd-crawler-${{ matrix.goos }}_${{ matrix.goarch }}$EXE_SUFFIX
 
     - name: Upload Artifacts
       uses: actions/upload-artifact@v3
       with:
         name: b4nd-crawler-${{ matrix.goos }}_${{ matrix.goarch }}
-        path: b4nd-crawler-${{ matrix.goos }}_${{ matrix.goarch }}
+        path: b4nd-crawler-${{ matrix.goos }}_${{ matrix.goarch }}$EXE_SUFFIX
