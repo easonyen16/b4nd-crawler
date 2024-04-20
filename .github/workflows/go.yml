@@ -31,10 +31,12 @@ jobs:
         else
           EXE_SUFFIX=""
         fi
-        go build -v -o b4nd-crawler-${{ matrix.goos }}_${{ matrix.goarch }}$EXE_SUFFIX
+        FILENAME="b4nd-crawler-${{ matrix.goos }}_${{ matrix.goarch }}${EXE_SUFFIX}"
+        go build -v -o $FILENAME
+        echo "Built file $FILENAME"
 
     - name: Upload Artifacts
       uses: actions/upload-artifact@v3
       with:
-        name: b4nd-crawler-${{ matrix.goos }}_${{ matrix.goarch }}
-        path: b4nd-crawler-${{ matrix.goos }}_${{ matrix.goarch }}$EXE_SUFFIX
+        name: ${{ matrix.goos }}_${{ matrix.goarch }}_artifact
+        path: b4nd-crawler-${{ matrix.goos }}_${{ matrix.goarch }}${{ matrix.goos == 'windows' && '.exe' || '' }}
