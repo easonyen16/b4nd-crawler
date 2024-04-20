@@ -1,6 +1,6 @@
 module b4nd-crawler
 
-go 1.22.1
+go 1.22
 
 require (
 	github.com/manifoldco/promptui v0.9.0
