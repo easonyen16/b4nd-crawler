@@ -25,7 +25,7 @@ jobs:
       env:
         GOOS: ${{ matrix.goos }}
         GOARCH: ${{ matrix.goarch }}
-      run: go build -v -o myapp-${{ matrix.goos }}-${{ matrix.goarch }}
+      run: go build -v -o b4nd-crawler-${{ matrix.goos }}_${{ matrix.goarch }}
 
     - name: Upload Artifacts
       uses: actions/upload-artifact@v3
