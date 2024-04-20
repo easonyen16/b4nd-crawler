@@ -243,7 +243,7 @@ func loginWithCredentials() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	fmt.Println("Response Body:", string(responseBody))
+	//fmt.Println("Response Body:", string(responseBody))
 
 	var respData map[string]interface{}
 	if err := json.Unmarshal(responseBody, &respData); err != nil {
