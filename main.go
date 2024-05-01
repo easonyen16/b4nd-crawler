@@ -40,6 +40,8 @@ type LoginResponse struct {
 	} `json:"data"`
 }
 
+var version string = "1.2"
+
 func main() {
 	displayWelcome()
 
@@ -86,7 +88,7 @@ func main() {
 	// Allow user to select the artist using promptui
 	prompt = promptui.Select{
 		Label: "Select the artist",
-		Items: []string{"松村沙友理 (ID 36)", "鈴木絢音 (ID 37)", "菅井友香 (ID 43)"},
+		Items: []string{"松村沙友理 (ID 36)", "鈴木絢音 (ID 37)", "菅井友香 (ID 43)", "齊藤京子 (ID 51)"},
 	}
 	_, result, err = prompt.Run()
 	if err != nil {
@@ -184,7 +186,7 @@ func displayWelcome() {
 
 	fmt.Println(topBorder)
 	fmt.Println(emptyLine)
-	fmt.Println(centeredLine("B4ND Crawler Version 1.1"))
+	fmt.Println(centeredLine("B4ND Crawler Version " + version))
 	fmt.Println(centeredLine("Made by E.Y. Studio"))
 	fmt.Println(emptyLine)
 	fmt.Println(bottomBorder)
