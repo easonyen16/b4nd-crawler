@@ -4,9 +4,11 @@ import (
 	"bufio"
 	"bytes"
 	"encoding/json"
+	"flag"
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -15,6 +17,10 @@ import (
 
 	"github.com/manifoldco/promptui"
 	"golang.org/x/crypto/ssh/terminal"
+)
+
+var (
+	proxyAddr = flag.String("proxy", "", "Proxy address in the format ip:port")
 )
 
 type ApiResponse struct {
@@ -40,10 +46,28 @@ type LoginResponse struct {
 	} `json:"data"`
 }
 
-var version string = "1.2"
+var version string = "1.3"
 
 func main() {
+	flag.Parse()
+
 	displayWelcome()
+
+	var client *http.Client
+	if *proxyAddr != "" {
+		proxyURL, err := url.Parse("http://" + *proxyAddr)
+		if err != nil {
+			fmt.Println("Error parsing proxy address:", err)
+			return
+		}
+		client = &http.Client{
+			Transport: &http.Transport{
+				Proxy: http.ProxyURL(proxyURL),
+			},
+		}
+	} else {
+		client = &http.Client{}
+	}
 
 	// Create prompt menu with options
 	prompt := promptui.Select{
@@ -59,7 +83,7 @@ func main() {
 	var token string
 	switch result {
 	case "Use Account Password":
-		token, err = loginWithCredentials()
+		token, err = loginWithCredentials(client)
 		if err != nil {
 			fmt.Println("Error logging in:", err)
 			return
@@ -101,7 +125,6 @@ func main() {
 	artistID = strings.TrimRight(artistID, ")")
 
 	url := "https://admin.b4nd.me/api/message/getChatsHistory/" + artistID
-	client := &http.Client{}
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		panic(err)
@@ -192,7 +215,7 @@ func displayWelcome() {
 	fmt.Println(bottomBorder)
 }
 
-func loginWithCredentials() (string, error) {
+func loginWithCredentials(client *http.Client) (string, error) {
 	reader := bufio.NewReader(os.Stdin)
 	var email, password string
 
@@ -234,7 +257,6 @@ func loginWithCredentials() (string, error) {
 	req.Header.Add("accept-encoding", "gzip")
 	req.Header.Add("User-Agent", "B4ND/1.1.12 (com.tokyo-tsushin.b4nd.prd; build:27; iOS 17.3.1) Alamofire/5.6.1")
 
-	client := &http.Client{}
 	response, err := client.Do(req)
 	if err != nil {
 		return "", err
@@ -255,7 +277,7 @@ func loginWithCredentials() (string, error) {
 	if messages, ok := respData["messages"].([]interface{}); ok && len(messages) > 0 {
 		if msg, ok := messages[0].(string); ok {
 			fmt.Println("Login failed:", msg)
-			return loginWithCredentials()
+			return loginWithCredentials(client)
 		}
 	}
 
