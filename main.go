@@ -46,12 +46,18 @@ type LoginResponse struct {
 	} `json:"data"`
 }
 
-var version string = "1.3"
+var version string = "1.3.1"
 
 func main() {
+	displayWelcome()
+
 	flag.Parse()
 
-	displayWelcome()
+	if len(flag.Args()) > 0 {
+		fmt.Printf("Error: Unsupported command-line arguments: %v\n", flag.Args())
+		flag.Usage()
+		os.Exit(1)
+	}
 
 	var client *http.Client
 	if *proxyAddr != "" {
@@ -65,6 +71,7 @@ func main() {
 				Proxy: http.ProxyURL(proxyURL),
 			},
 		}
+		fmt.Println("Using proxy:", *proxyAddr)
 	} else {
 		client = &http.Client{}
 	}
@@ -185,7 +192,7 @@ func main() {
 		if item.Upload != nil {
 			filePath := filepath.Join(folderPath, filepath.Base(item.Upload.Path))
 			if _, err := os.Stat(filePath); os.IsNotExist(err) {
-				downloadFile(item.Upload.Path, filePath)
+				downloadFile(client, item.Upload.Path, filePath)
 				fmt.Printf("[%s]: Downloaded file %s\n", time.Unix(item.SendAt, 0).Format("2006-01-02 15:04:05"), filepath.Base(item.Upload.Path))
 				os.Chtimes(filePath, time.Now(), time.Unix(item.SendAt, 0))
 			}
@@ -305,8 +312,13 @@ func writeTextFile(filePath, content string, sendAt int64) {
 	os.Chtimes(filePath, time.Now(), time.Unix(sendAt, 0))
 }
 
-func downloadFile(url, filePath string) {
-	resp, err := http.Get(url)
+func downloadFile(client *http.Client, url, filePath string) {
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		panic(err)
+	}
+
+	resp, err := client.Do(req)
 	if err != nil {
 		panic(err)
 	}
