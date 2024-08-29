@@ -46,7 +46,7 @@ type LoginResponse struct {
 	} `json:"data"`
 }
 
-var version string = "1.3.1"
+var version string = "1.3.2"
 
 func main() {
 	displayWelcome()
@@ -140,12 +140,12 @@ func main() {
 	// Set headers
 	req.Header.Add("Accept", "*/*")
 	req.Header.Add("Authorization", "Bearer "+token)
-	req.Header.Add("App-Version", "1.1.12")
+	req.Header.Add("App-Version", "1.1.20")
 	req.Header.Add("Accept-Encoding", "br;q=1.0, gzip;q=0.9, deflate;q=0.8")
 	req.Header.Add("Platform", "IOS")
 	req.Header.Add("App-Name", "b4nd-user")
 	req.Header.Add("Accept-Language", "zh-Hans-JP;q=1.0, ja-JP;q=0.9, zh-Hant-JP;q=0.8")
-	req.Header.Add("User-Agent", "B4ND/1.1.12 (com.tokyo-tsushin.b4nd.prd; build:27; iOS 17.3.1) Alamofire/5.6.1")
+	req.Header.Add("User-Agent", "B4ND/1.1.20 (com.tokyo-tsushin.b4nd.prd; build:27; iOS 17.3.1) Alamofire/5.6.1")
 
 	response, err := client.Do(req)
 	if err != nil {
@@ -257,12 +257,12 @@ func loginWithCredentials(client *http.Client) (string, error) {
 		return "", err
 	}
 
-	req.Header.Add("app-version", "1.1.12")
+	req.Header.Add("app-version", "1.1.20")
 	req.Header.Add("app-name", "b4nd-user")
 	req.Header.Add("Platform", "IOS")
 	req.Header.Add("content-type", "application/json; charset=UTF-8")
 	req.Header.Add("accept-encoding", "gzip")
-	req.Header.Add("User-Agent", "B4ND/1.1.12 (com.tokyo-tsushin.b4nd.prd; build:27; iOS 17.3.1) Alamofire/5.6.1")
+	req.Header.Add("User-Agent", "B4ND/1.1.20 (com.tokyo-tsushin.b4nd.prd; build:27; iOS 17.3.1) Alamofire/5.6.1")
 
 	response, err := client.Do(req)
 	if err != nil {
