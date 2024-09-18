@@ -46,7 +46,7 @@ type LoginResponse struct {
 	} `json:"data"`
 }
 
-var version string = "1.3.2"
+var version string = "1.4.0"
 
 func main() {
 	displayWelcome()
@@ -76,8 +76,34 @@ func main() {
 		client = &http.Client{}
 	}
 
-	// Create prompt menu with options
+	// Allow user to select the artist using promptui
 	prompt := promptui.Select{
+		Label: "Select the artist",
+		Items: []string{"松村沙友理 (ID 36)", "鈴木絢音 (ID 37)", "菅井友香 (ID 43)", "齊藤京子 (ID 1)"},
+	}
+	_, artistResult, err := prompt.Run()
+	if err != nil {
+		fmt.Printf("Prompt failed %v\n", err)
+		return
+	}
+
+	// Extract the ID from the selection
+	artistID := strings.Split(artistResult, " (ID ")[1]
+	artistID = strings.TrimRight(artistID, ")")
+
+	// Set API base URL and headers based on the selected artist
+	apiBaseURL := "https://admin.b4nd.me/api"
+	appVersion := "1.1.20"
+	appName := "b4nd-user"
+
+	if strings.Contains(artistResult, "齊藤京子") {
+		apiBaseURL = "https://api-prd.saitokyoko-message.jp/api"
+		appVersion = "1.0.2"
+		appName = "kyoko-user"
+	}
+
+	// Create prompt menu with options
+	prompt = promptui.Select{
 		Label: "Select Login Method",
 		Items: []string{"Use Account Password", "Enter Token Directly"},
 	}
@@ -90,7 +116,7 @@ func main() {
 	var token string
 	switch result {
 	case "Use Account Password":
-		token, err = loginWithCredentials(client)
+		token, err = loginWithCredentials(client, apiBaseURL, appVersion, appName)
 		if err != nil {
 			fmt.Println("Error logging in:", err)
 			return
@@ -116,22 +142,8 @@ func main() {
 
 	fmt.Println("Token:", token)
 
-	// Allow user to select the artist using promptui
-	prompt = promptui.Select{
-		Label: "Select the artist",
-		Items: []string{"松村沙友理 (ID 36)", "鈴木絢音 (ID 37)", "菅井友香 (ID 43)", "齊藤京子 (ID 51)"},
-	}
-	_, result, err = prompt.Run()
-	if err != nil {
-		fmt.Printf("Prompt failed %v\n", err)
-		return
-	}
-
-	// Extract the ID from the selection
-	artistID := strings.Split(result, " (ID ")[1]
-	artistID = strings.TrimRight(artistID, ")")
-
-	url := "https://admin.b4nd.me/api/message/getChatsHistory/" + artistID
+	// Now construct the URL for API request
+	url := apiBaseURL + "/message/getChatsHistory/" + artistID
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		panic(err)
@@ -140,12 +152,12 @@ func main() {
 	// Set headers
 	req.Header.Add("Accept", "*/*")
 	req.Header.Add("Authorization", "Bearer "+token)
-	req.Header.Add("App-Version", "1.1.20")
+	req.Header.Add("App-Version", appVersion)
 	req.Header.Add("Accept-Encoding", "br;q=1.0, gzip;q=0.9, deflate;q=0.8")
 	req.Header.Add("Platform", "IOS")
-	req.Header.Add("App-Name", "b4nd-user")
+	req.Header.Add("App-Name", appName)
 	req.Header.Add("Accept-Language", "zh-Hans-JP;q=1.0, ja-JP;q=0.9, zh-Hant-JP;q=0.8")
-	req.Header.Add("User-Agent", "B4ND/1.1.20 (com.tokyo-tsushin.b4nd.prd; build:27; iOS 17.3.1) Alamofire/5.6.1")
+	req.Header.Add("User-Agent", "B4ND/"+appVersion+" (com.tokyo-tsushin.b4nd.prd; build:27; iOS 17.3.1) Alamofire/5.6.1")
 
 	response, err := client.Do(req)
 	if err != nil {
@@ -222,7 +234,7 @@ func displayWelcome() {
 	fmt.Println(bottomBorder)
 }
 
-func loginWithCredentials(client *http.Client) (string, error) {
+func loginWithCredentials(client *http.Client, apiBaseURL, appVersion, appName string) (string, error) {
 	reader := bufio.NewReader(os.Stdin)
 	var email, password string
 
@@ -252,17 +264,19 @@ func loginWithCredentials(client *http.Client) (string, error) {
 	}
 	body, _ := json.Marshal(data)
 
-	req, err := http.NewRequest("POST", "https://admin.b4nd.me/api/user/login", bytes.NewBuffer(body))
+	loginURL := apiBaseURL + "/user/login"
+
+	req, err := http.NewRequest("POST", loginURL, bytes.NewBuffer(body))
 	if err != nil {
 		return "", err
 	}
 
-	req.Header.Add("app-version", "1.1.20")
-	req.Header.Add("app-name", "b4nd-user")
+	req.Header.Add("app-version", appVersion)
+	req.Header.Add("app-name", appName)
 	req.Header.Add("Platform", "IOS")
 	req.Header.Add("content-type", "application/json; charset=UTF-8")
 	req.Header.Add("accept-encoding", "gzip")
-	req.Header.Add("User-Agent", "B4ND/1.1.20 (com.tokyo-tsushin.b4nd.prd; build:27; iOS 17.3.1) Alamofire/5.6.1")
+	req.Header.Add("User-Agent", "B4ND/"+appVersion+" (com.tokyo-tsushin.b4nd.prd; build:27; iOS 17.3.1) Alamofire/5.6.1")
 
 	response, err := client.Do(req)
 	if err != nil {
@@ -284,7 +298,7 @@ func loginWithCredentials(client *http.Client) (string, error) {
 	if messages, ok := respData["messages"].([]interface{}); ok && len(messages) > 0 {
 		if msg, ok := messages[0].(string); ok {
 			fmt.Println("Login failed:", msg)
-			return loginWithCredentials(client)
+			return loginWithCredentials(client, apiBaseURL, appVersion, appName)
 		}
 	}
 
